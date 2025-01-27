@@ -18,7 +18,8 @@ def calculate_probabilities():
         position_away = int(entry_position_away.get())
         form_home = int(entry_form_home.get())
         form_away = int(entry_form_away.get())
-        bookmaker_odds = float(entry_bookmaker_odds.get())
+        bookmaker_odds_draw = float(entry_bookmaker_odds_draw.get())
+        bookmaker_odds_over_under_2_5 = float(entry_bookmaker_odds_over_under_2_5.get())
         account_balance = float(entry_account_balance.get())
 
         # Adjust goal averages based on injuries, form, and league position
@@ -35,19 +36,26 @@ def calculate_probabilities():
         # Convert draw probability to odds
         calculated_draw_odds = 1 / draw_probability if draw_probability > 0 else float('inf')
 
+        # Adjust draw probability based on over/under 2.5 goals odds
+        implied_probability_over_under_2_5 = 1 / bookmaker_odds_over_under_2_5
+        avg_goals_per_game = adjusted_home_goals + adjusted_away_goals
+        adjustment_factor = 1 - abs(implied_probability_over_under_2_5 - (avg_goals_per_game / 3))
+        adjusted_draw_probability = draw_probability * adjustment_factor
+
         # Calculate edge for laying strategy
-        edge = (1 / bookmaker_odds) - (1 / calculated_draw_odds)
+        edge = (1 / bookmaker_odds_draw) - (1 / adjusted_draw_probability)
 
         # Calculate recommended stake using Kelly Criterion (0.25%) for laying strategy
         if edge > 0:
-            kelly_fraction = 0.25 * edge / (1 / bookmaker_odds)
+            kelly_fraction = 0.25 * edge / (1 / bookmaker_odds_draw)
             recommended_stake = kelly_fraction * account_balance
         else:
             recommended_stake = 0
 
-        result_label["text"] = (f"Draw Probability: {draw_probability:.2%}\n"
+        result_label["text"] = (f"Draw Probability: {adjusted_draw_probability:.2%}\n"
                                 f"Calculated Draw Odds: {calculated_draw_odds:.2f}\n"
-                                f"Offered Draw Odds: {bookmaker_odds:.2f}\n"
+                                f"Offered Draw Odds: {bookmaker_odds_draw:.2f}\n"
+                                f"Adjustment Factor (Over/Under 2.5): {adjustment_factor:.4f}\n"
                                 f"Edge: {edge:.4f}\n"
                                 f"Recommended Stake (Kelly Criterion): £{recommended_stake:.2f}")
     except ValueError:
@@ -69,7 +77,8 @@ fields = [
     ("Away Team League Position", "entry_position_away"),
     ("Home Team Wins in Last 5 Matches", "entry_form_home"),
     ("Away Team Wins in Last 5 Matches", "entry_form_away"),
-    ("Bookmaker Offered Draw Odds", "entry_bookmaker_odds"),
+    ("Bookmaker Offered Draw Odds", "entry_bookmaker_odds_draw"),
+    ("Bookmaker Odds for Over/Under 2.5 Goals", "entry_bookmaker_odds_over_under_2_5"),
     ("Account Balance", "entry_account_balance"),
 ]
 
@@ -93,7 +102,8 @@ entry_position_home = entries["entry_position_home"]
 entry_position_away = entries["entry_position_away"]
 entry_form_home = entries["entry_form_home"]
 entry_form_away = entries["entry_form_away"]
-entry_bookmaker_odds = entries["entry_bookmaker_odds"]
+entry_bookmaker_odds_draw = entries["entry_bookmaker_odds_draw"]
+entry_bookmaker_odds_over_under_2_5 = entries["entry_bookmaker_odds_over_under_2_5"]
 entry_account_balance = entries["entry_account_balance"]
 
 # Calculate button
