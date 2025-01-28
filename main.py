@@ -65,6 +65,12 @@ def calculate_probabilities():
     except ValueError:
         result_label["text"] = "Please enter valid numerical values."
 
+# Function to reset all fields
+def reset_fields():
+    for entry in entries.values():
+        entry.delete(0, tk.END)
+    result_label["text"] = ""
+
 # Create the main application window
 root = tk.Tk()
 root.title("Football Draw Prediction")
@@ -114,9 +120,13 @@ entry_account_balance = entries["entry_account_balance"]
 calculate_button = ttk.Button(root, text="Calculate Draw Probability", command=calculate_probabilities)
 calculate_button.grid(row=len(fields), column=0, columnspan=2, pady=10)
 
+# Reset button
+reset_button = ttk.Button(root, text="Reset Fields", command=reset_fields)
+reset_button.grid(row=len(fields) + 1, column=0, columnspan=2, pady=10)
+
 # Result label
 result_label = tk.Label(root, text="", font=("Helvetica", 14))
-result_label.grid(row=len(fields) + 1, column=0, columnspan=2, pady=10)
+result_label.grid(row=len(fields) + 2, column=0, columnspan=2, pady=10)
 
 # Start the application
 root.mainloop()
