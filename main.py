@@ -45,9 +45,13 @@ def calculate_probabilities():
         # Calculate edge for laying strategy
         edge = (1 / bookmaker_odds_draw) - (1 / adjusted_draw_probability)
 
-        # Calculate recommended stake using Kelly Criterion (0.25%) for laying strategy
-        if edge > 0:
-            kelly_fraction = 0.25 * edge / (1 / bookmaker_odds_draw)
+        # Adjust stake based on how negative the edge is
+        if edge < -7.0:  # Only recommend stake if the edge is less than -7.0 (value bet)
+            # Calculate how far below -7 the edge is (this adjusts the stake)
+            edge_magnitude = abs(edge + 7.0)  # The further the edge is below -7, the larger the stake
+
+            # Scale stake based on edge magnitude; if edge is -10, stake will be larger than -7.0
+            kelly_fraction = 0.075 * (edge_magnitude / 3)  # Scale based on edge, and cap the scaling factor
             recommended_stake = kelly_fraction * account_balance
         else:
             recommended_stake = 0
@@ -57,7 +61,7 @@ def calculate_probabilities():
                                 f"Offered Draw Odds: {bookmaker_odds_draw:.2f}\n"
                                 f"Adjustment Factor (Over/Under 2.5): {adjustment_factor:.4f}\n"
                                 f"Edge: {edge:.4f}\n"
-                                f"Recommended Stake (Kelly Criterion): £{recommended_stake:.2f}")
+                                f"Recommended Stake (Quarter Kelly Criterion): £{recommended_stake:.2f}")
     except ValueError:
         result_label["text"] = "Please enter valid numerical values."
 
