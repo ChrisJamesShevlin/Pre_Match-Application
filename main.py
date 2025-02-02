@@ -51,8 +51,12 @@ def calculate_probabilities():
             edge_magnitude = abs(edge + 7.0)  # The further the edge is below -7, the larger the stake
 
             # Scale stake based on edge magnitude; if edge is -10, stake will be larger than -7.0
-            kelly_fraction = 0.075 * (edge_magnitude / 3)  # Scale based on edge, and cap the scaling factor
+            kelly_fraction = 0.025 * (edge_magnitude / 3)  # Scale based on edge, and cap the scaling factor
             recommended_stake = kelly_fraction * account_balance
+
+            # Cap the stake at 5% of account balance
+            max_stake = 0.05 * account_balance
+            recommended_stake = min(recommended_stake, max_stake)
         else:
             recommended_stake = 0
 
