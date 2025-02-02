@@ -51,12 +51,8 @@ def calculate_probabilities():
             edge_magnitude = abs(edge + 7.0)  # The further the edge is below -7, the larger the stake
 
             # Scale stake based on edge magnitude; if edge is -10, stake will be larger than -7.0
-            kelly_fraction = 0.025 * (edge_magnitude / 3)  # Scale based on edge, and cap the scaling factor
+            kelly_fraction = 0.01 * (edge_magnitude / 3)  # Reduced Kelly to 10%
             recommended_stake = kelly_fraction * account_balance
-
-            # Cap the stake at 5% of account balance
-            max_stake = 0.05 * account_balance
-            recommended_stake = min(recommended_stake, max_stake)
         else:
             recommended_stake = 0
 
@@ -65,7 +61,7 @@ def calculate_probabilities():
                                 f"Offered Draw Odds: {bookmaker_odds_draw:.2f}\n"
                                 f"Adjustment Factor (Over/Under 2.5): {adjustment_factor:.4f}\n"
                                 f"Edge: {edge:.4f}\n"
-                                f"Recommended Stake (Quarter Kelly Criterion): £{recommended_stake:.2f}")
+                                f"Recommended Stake (10% Kelly Criterion): £{recommended_stake:.2f}")
     except ValueError:
         result_label["text"] = "Please enter valid numerical values."
 
