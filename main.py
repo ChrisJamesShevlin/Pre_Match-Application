@@ -61,7 +61,7 @@ def calculate_probabilities():
                                 f"Offered Draw Odds: {bookmaker_odds_draw:.2f}\n"
                                 f"Adjustment Factor (Over/Under 2.5): {adjustment_factor:.4f}\n"
                                 f"Edge: {edge:.4f}\n"
-                                f"Recommended Stake (10% Kelly Criterion): £{recommended_stake:.2f}")
+                                f"Recommended Stake: £{recommended_stake:.2f}")
     except ValueError:
         result_label["text"] = "Please enter valid numerical values."
 
