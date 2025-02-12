@@ -19,7 +19,9 @@ def calculate_probabilities():
         form_home = int(entry_form_home.get())
         form_away = int(entry_form_away.get())
         bookmaker_odds_draw = float(entry_bookmaker_odds_draw.get())
-        bookmaker_odds_under_2_5 = float(entry_bookmaker_odds_under_2_5.get())  # Renamed for clarity
+        bookmaker_odds_under_2_5 = float(entry_bookmaker_odds_under_2_5.get())
+        bookmaker_odds_home = float(entry_bookmaker_odds_home.get())
+        bookmaker_odds_away = float(entry_bookmaker_odds_away.get())
         account_balance = float(entry_account_balance.get())
 
         # Adjust goal averages based on injuries, form, and league position
@@ -33,29 +35,44 @@ def calculate_probabilities():
         # Calculate the draw probability
         draw_probability = sum([home_goals_probs[i] * away_goals_probs[i] for i in range(5)])
 
-        # **Increase weighting for common draw outcomes (0-0, 1-1, 2-2)**
-        draw_probability += (home_goals_probs[0] * away_goals_probs[0]) * 0.15  # Extra 15% weight for 0-0
-        draw_probability += (home_goals_probs[1] * away_goals_probs[1]) * 0.10  # Extra 10% weight for 1-1
-        draw_probability += (home_goals_probs[2] * away_goals_probs[2]) * 0.05  # Extra 5% weight for 2-2
+        # Increase weighting for common draw outcomes (0-0, 1-1, 2-2)
+        draw_probability += (home_goals_probs[0] * away_goals_probs[0]) * 0.10  # Reduced to 10% weight for 0-0
+        draw_probability += (home_goals_probs[1] * away_goals_probs[1]) * 0.07  # Reduced to 7% weight for 1-1
+        draw_probability += (home_goals_probs[2] * away_goals_probs[2]) * 0.03  # Reduced to 3% weight for 2-2
 
-        # **Boost draw probability for evenly matched teams**
+        # Boost draw probability for evenly matched teams
         if abs(position_home - position_away) <= 2:
-            draw_probability *= 1.15  # Increase by 15%
+            draw_probability *= 1.10  # Reduced to 10% increase
 
-        # **Properly adjust for Over/Under 2.5 Goals**
+        # Adjust draw probability for mismatched teams
+        position_diff_threshold = 5  # Define a threshold for position difference
+        if abs(position_home - position_away) >= position_diff_threshold:
+            draw_probability *= 1.05  # Reduced to 5% increase for mismatched teams
+
+        # Adjust for Over/Under 2.5 Goals
         implied_probability_under_2_5 = 1 / bookmaker_odds_under_2_5  # How likely Under 2.5 is
         adjustment_factor = 1 + (implied_probability_under_2_5 - 0.5)  # Adjust based on deviation
 
         # Ensure adjustment factor stays in a reasonable range (0.7 - 1.3)
         adjustment_factor = min(1.3, max(0.7, adjustment_factor))
 
-        # **Apply the adjustment properly**
+        # Apply the adjustment properly
         adjusted_draw_probability = draw_probability * adjustment_factor
+
+        # Factor in home and away odds
+        implied_probability_home = 1 / bookmaker_odds_home
+        implied_probability_away = 1 / bookmaker_odds_away
+        combined_probability = implied_probability_home + implied_probability_away + (1 / bookmaker_odds_draw)
+        adjusted_draw_probability /= combined_probability  # Normalize the draw probability
+
+        # Further adjust draw odds if one team's odds are below 1.6
+        if bookmaker_odds_home < 1.6 or bookmaker_odds_away < 1.6:
+            adjusted_draw_probability *= 1.15  # Increase draw probability by 15%
 
         # Calculate edge for laying strategy
         edge = (1 / bookmaker_odds_draw) - (1 / adjusted_draw_probability)
 
-        # **New Kelly stake calculation (trigger at edge < -4.0)**
+        # New Kelly stake calculation (trigger at edge < -4.0)
         if edge < -4.0:  # Changed from -7.0 to -4.0
             edge_magnitude = abs(edge + 4.0)  # Adjusted to match new threshold
             kelly_fraction = 0.025 * (edge_magnitude / 3)  # Reduced Kelly to 10%
@@ -95,6 +112,8 @@ fields = [
     ("Away Team Wins in Last 5 Matches", "entry_form_away"),
     ("Bookmaker Offered Draw Odds", "entry_bookmaker_odds_draw"),
     ("Bookmaker Odds for Under 2.5 Goals", "entry_bookmaker_odds_under_2_5"),
+    ("Bookmaker Odds for Home Win", "entry_bookmaker_odds_home"),
+    ("Bookmaker Odds for Away Win", "entry_bookmaker_odds_away"),
     ("Account Balance", "entry_account_balance"),
 ]
 
@@ -121,6 +140,8 @@ entry_form_home = entries["entry_form_home"]
 entry_form_away = entries["entry_form_away"]
 entry_bookmaker_odds_draw = entries["entry_bookmaker_odds_draw"]
 entry_bookmaker_odds_under_2_5 = entries["entry_bookmaker_odds_under_2_5"]
+entry_bookmaker_odds_home = entries["entry_bookmaker_odds_home"]
+entry_bookmaker_odds_away = entries["entry_bookmaker_odds_away"]
 entry_account_balance = entries["entry_account_balance"]
 
 # Buttons
