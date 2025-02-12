@@ -33,9 +33,6 @@ def calculate_probabilities():
         # Calculate the draw probability
         draw_probability = sum([home_goals_probs[i] * away_goals_probs[i] for i in range(5)])
 
-        # Convert draw probability to odds
-        calculated_draw_odds = 1 / draw_probability if draw_probability > 0 else float('inf')
-
         # Adjust draw probability based on over/under 2.5 goals odds
         implied_probability_over_under_2_5 = 1 / bookmaker_odds_over_under_2_5
         avg_goals_per_game = adjusted_home_goals + adjusted_away_goals
@@ -47,18 +44,14 @@ def calculate_probabilities():
 
         # Adjust stake based on how negative the edge is
         if edge < -7.0:  # Only recommend stake if the edge is less than -7.0 (value bet)
-            # Calculate how far below -7 the edge is (this adjusts the stake)
-            edge_magnitude = abs(edge + 7.0)  # The further the edge is below -7, the larger the stake
-
-            # Scale stake based on edge magnitude; if edge is -10, stake will be larger than -7.0
+            edge_magnitude = abs(edge + 7.0)  
             kelly_fraction = 0.025 * (edge_magnitude / 3)  # Reduced Kelly to 10%
             recommended_stake = kelly_fraction * account_balance
         else:
             recommended_stake = 0
 
-        result_label["text"] = (f"Draw Probability: {adjusted_draw_probability:.2%}\n"
-                                f"Calculated Draw Odds: {calculated_draw_odds:.2f}\n"
-                                f"Offered Draw Odds: {bookmaker_odds_draw:.2f}\n"
+        result_label["text"] = (f"Bookmaker Draw Odds: {bookmaker_odds_draw:.2f}\n"
+                                f"Calculated Draw Odds (Adjusted): {1 / adjusted_draw_probability:.2f}\n"
                                 f"Adjustment Factor (Over/Under 2.5): {adjustment_factor:.4f}\n"
                                 f"Edge: {edge:.4f}\n"
                                 f"Recommended Stake: £{recommended_stake:.2f}")
