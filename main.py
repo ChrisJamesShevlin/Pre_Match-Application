@@ -75,7 +75,7 @@ def calculate_probabilities():
         # New Kelly stake calculation (trigger at edge < -4.0)
         if edge < -4.0:  # Changed from -7.0 to -4.0
             edge_magnitude = abs(edge + 4.0)  # Adjusted to match new threshold
-            kelly_fraction = 0.025 * (edge_magnitude / 3)  # Reduced Kelly to 10%
+            kelly_fraction = 0.25 * (edge_magnitude / 3)  # Reduced Kelly to 10%
             recommended_stake = kelly_fraction * account_balance
         else:
             recommended_stake = 0
