@@ -2,103 +2,80 @@ import tkinter as tk
 from tkinter import ttk
 import math
 
-# Function to calculate probabilities using a Poisson-like approximation
 def poisson_probability(mean, k):
     return (math.exp(-mean) * (mean ** k)) / math.factorial(k)
 
 def calculate_probabilities():
     try:
-        avg_goals_home_scored = float(entry_home_scored.get())
-        avg_goals_away_conceded = float(entry_away_conceded.get())
-        avg_goals_away_scored = float(entry_away_scored.get())
-        avg_goals_home_conceded = float(entry_home_conceded.get())
-        injuries_home = int(entry_injuries_home.get())
-        injuries_away = int(entry_injuries_away.get())
-        position_home = int(entry_position_home.get())
-        position_away = int(entry_position_away.get())
-        form_home = int(entry_form_home.get())
-        form_away = int(entry_form_away.get())
-        bookmaker_odds_draw = float(entry_bookmaker_odds_draw.get())
-        bookmaker_odds_under_2_5 = float(entry_bookmaker_odds_under_2_5.get())
-        bookmaker_odds_home = float(entry_bookmaker_odds_home.get())
-        bookmaker_odds_away = float(entry_bookmaker_odds_away.get())
-        account_balance = float(entry_account_balance.get())
+        avg_goals_home_scored = float(entries["entry_home_scored"].get())
+        avg_goals_away_conceded = float(entries["entry_away_conceded"].get())
+        avg_goals_away_scored = float(entries["entry_away_scored"].get())
+        avg_goals_home_conceded = float(entries["entry_home_conceded"].get())
+        injuries_home = int(entries["entry_injuries_home"].get())
+        injuries_away = int(entries["entry_injuries_away"].get())
+        position_home = int(entries["entry_position_home"].get())
+        position_away = int(entries["entry_position_away"].get())
+        form_home = int(entries["entry_form_home"].get())
+        form_away = int(entries["entry_form_away"].get())
+        bookmaker_odds_draw = float(entries["entry_bookmaker_odds_draw"].get())
+        bookmaker_odds_under_2_5 = float(entries["entry_bookmaker_odds_under_2_5"].get())
+        bookmaker_odds_home = float(entries["entry_bookmaker_odds_home"].get())
+        bookmaker_odds_away = float(entries["entry_bookmaker_odds_away"].get())
+        account_balance = float(entries["entry_account_balance"].get())
 
-        # Adjust goal averages based on injuries, form, and league position
         adjusted_home_goals = avg_goals_home_scored * (1 - 0.05 * injuries_home) + form_home * 0.1 - position_home * 0.05
         adjusted_away_goals = avg_goals_away_scored * (1 - 0.05 * injuries_away) + form_away * 0.1 - position_away * 0.05
 
-        # Predict score probabilities using Poisson approximation
         home_goals_probs = [poisson_probability(adjusted_home_goals, i) for i in range(5)]
         away_goals_probs = [poisson_probability(adjusted_away_goals, i) for i in range(5)]
 
-        # Calculate the draw probability
         draw_probability = sum([home_goals_probs[i] * away_goals_probs[i] for i in range(5)])
+        draw_probability += (home_goals_probs[0] * away_goals_probs[0]) * 0.10
+        draw_probability += (home_goals_probs[1] * away_goals_probs[1]) * 0.07
+        draw_probability += (home_goals_probs[2] * away_goals_probs[2]) * 0.03
 
-        # Increase weighting for common draw outcomes (0-0, 1-1, 2-2)
-        draw_probability += (home_goals_probs[0] * away_goals_probs[0]) * 0.10  # Reduced to 10% weight for 0-0
-        draw_probability += (home_goals_probs[1] * away_goals_probs[1]) * 0.07  # Reduced to 7% weight for 1-1
-        draw_probability += (home_goals_probs[2] * away_goals_probs[2]) * 0.03  # Reduced to 3% weight for 2-2
-
-        # Boost draw probability for evenly matched teams
         if abs(position_home - position_away) <= 2:
-            draw_probability *= 1.10  # Reduced to 10% increase
+            draw_probability *= 1.10
+        if abs(position_home - position_away) >= 5:
+            draw_probability *= 1.05
 
-        # Adjust draw probability for mismatched teams
-        position_diff_threshold = 5  # Define a threshold for position difference
-        if abs(position_home - position_away) >= position_diff_threshold:
-            draw_probability *= 1.05  # Reduced to 5% increase for mismatched teams
-
-        # Adjust for Over/Under 2.5 Goals
-        implied_probability_under_2_5 = 1 / bookmaker_odds_under_2_5  # How likely Under 2.5 is
-        adjustment_factor = 1 + (implied_probability_under_2_5 - 0.5)  # Adjust based on deviation
-
-        # Ensure adjustment factor stays in a reasonable range (0.7 - 1.3)
-        adjustment_factor = min(1.3, max(0.7, adjustment_factor))
-
-        # Apply the adjustment properly
+        implied_probability_under_2_5 = 1 / bookmaker_odds_under_2_5
+        adjustment_factor = min(1.3, max(0.7, 1 + (implied_probability_under_2_5 - 0.5)))
         adjusted_draw_probability = draw_probability * adjustment_factor
-
-        # Factor in home and away odds
         implied_probability_home = 1 / bookmaker_odds_home
         implied_probability_away = 1 / bookmaker_odds_away
         combined_probability = implied_probability_home + implied_probability_away + (1 / bookmaker_odds_draw)
-        adjusted_draw_probability /= combined_probability  # Normalize the draw probability
+        adjusted_draw_probability /= combined_probability
 
-        # Further adjust draw odds if one team's odds are below 1.6
         if bookmaker_odds_home < 1.6 or bookmaker_odds_away < 1.6:
-            adjusted_draw_probability *= 1.15  # Increase draw probability by 15%
+            adjusted_draw_probability *= 1.15
 
-        # Calculate edge for laying strategy
-        edge = (1 / bookmaker_odds_draw) - (1 / adjusted_draw_probability)
+        calculated_draw_odds = 1 / adjusted_draw_probability
 
-        # New Kelly stake calculation (trigger at edge < -4.0)
-        if edge < -4.0:  # Changed from -7.0 to -4.0
-            edge_magnitude = abs(edge + 4.0)  # Adjusted to match new threshold
-            kelly_fraction = 0.06 * (edge_magnitude / 3)  # Reduced Kelly to 10%
+        edge = (1 / bookmaker_odds_draw) - adjusted_draw_probability
+        recommended_stake = 0
+        
+        if edge < -4.0:
+            edge_magnitude = abs(edge + 4.0)
+            kelly_fraction = 0.06 * (edge_magnitude / 3)
             recommended_stake = kelly_fraction * account_balance
-        else:
-            recommended_stake = 0
 
         result_label["text"] = (f"Bookmaker Draw Odds: {bookmaker_odds_draw:.2f}\n"
-                                f"Calculated Draw Odds (Adjusted): {1 / adjusted_draw_probability:.2f}\n"
+                                f"Calculated Draw Odds (Adjusted): {calculated_draw_odds:.2f}\n"
                                 f"Adjustment Factor (Under 2.5 Goals): {adjustment_factor:.4f}\n"
                                 f"Edge: {edge:.4f}\n"
                                 f"Recommended Stake: £{recommended_stake:.2f}")
     except ValueError:
         result_label["text"] = "Please enter valid numerical values."
 
-# Function to reset all fields
 def reset_fields():
     for entry in entries.values():
         entry.delete(0, tk.END)
     result_label["text"] = ""
 
-# Create the main application window
 root = tk.Tk()
 root.title("Football Draw Prediction")
 
-# Input fields
 fields = [
     ("Home Team Average Goals Scored", "entry_home_scored"),
     ("Home Team Average Goals Conceded", "entry_home_conceded"),
@@ -118,40 +95,23 @@ fields = [
 ]
 
 entries = {}
-
 for i, (label_text, var_name) in enumerate(fields):
     label = tk.Label(root, text=label_text)
     label.grid(row=i, column=0, padx=10, pady=5, sticky="w")
-
     entry = ttk.Entry(root)
     entry.grid(row=i, column=1, padx=10, pady=5)
     entries[var_name] = entry
 
-# Assigning entries to variables for easier access
-entry_home_scored = entries["entry_home_scored"]
-entry_home_conceded = entries["entry_home_conceded"]
-entry_away_scored = entries["entry_away_scored"]
-entry_away_conceded = entries["entry_away_conceded"]
-entry_injuries_home = entries["entry_injuries_home"]
-entry_injuries_away = entries["entry_injuries_away"]
-entry_position_home = entries["entry_position_home"]
-entry_position_away = entries["entry_position_away"]
-entry_form_home = entries["entry_form_home"]
-entry_form_away = entries["entry_form_away"]
-entry_bookmaker_odds_draw = entries["entry_bookmaker_odds_draw"]
-entry_bookmaker_odds_under_2_5 = entries["entry_bookmaker_odds_under_2_5"]
-entry_bookmaker_odds_home = entries["entry_bookmaker_odds_home"]
-entry_bookmaker_odds_away = entries["entry_bookmaker_odds_away"]
-entry_account_balance = entries["entry_account_balance"]
+button_frame = tk.Frame(root)
+button_frame.grid(row=len(fields), column=0, columnspan=2, pady=10)
 
-# Buttons
-calculate_button = ttk.Button(root, text="Calculate Draw Probability", command=calculate_probabilities)
-calculate_button.grid(row=len(fields), column=0, columnspan=2, pady=10)
+calculate_button = ttk.Button(button_frame, text="Calculate Draw Probability", command=calculate_probabilities)
+calculate_button.grid(row=0, column=0, padx=5)
 
-reset_button = ttk.Button(root, text="Reset Fields", command=reset_fields)
-reset_button.grid(row=len(fields) + 1, column=0, columnspan=2, pady=10)
+reset_button = ttk.Button(button_frame, text="Reset", command=reset_fields)
+reset_button.grid(row=0, column=1, padx=5)
 
 result_label = tk.Label(root, text="", font=("Helvetica", 14))
-result_label.grid(row=len(fields) + 2, column=0, columnspan=2, pady=10)
+result_label.grid(row=len(fields) + 1, column=0, columnspan=2, pady=10)
 
 root.mainloop()
