@@ -52,13 +52,14 @@ def calculate_probabilities():
 
         calculated_draw_odds = 1 / adjusted_draw_probability
 
-        edge = (1 / bookmaker_odds_draw) - adjusted_draw_probability
-        recommended_stake = 0
-        
-        if edge < -4.0:
-            edge_magnitude = abs(edge + 4.0)
-            kelly_fraction = 0.06 * (edge_magnitude / 3)
+        if calculated_draw_odds > bookmaker_odds_draw:
+            edge = (1 / bookmaker_odds_draw) - adjusted_draw_probability
+            edge_magnitude = edge
+            kelly_fraction = 0.5 * (edge_magnitude / 2)
             recommended_stake = kelly_fraction * account_balance
+        else:
+            edge = 0
+            recommended_stake = 0
 
         result_label["text"] = (f"Bookmaker Draw Odds: {bookmaker_odds_draw:.2f}\n"
                                 f"Calculated Draw Odds (Adjusted): {calculated_draw_odds:.2f}\n"
