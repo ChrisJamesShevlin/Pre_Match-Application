@@ -36,12 +36,24 @@ def calculate_probabilities():
         calculated_home_odds = 1 / home_win_probability
         calculated_away_odds = 1 / away_win_probability
 
-        result_label["text"] = (f"Bookmaker Draw Odds: {bookmaker_odds_draw:.2f}\n"
-                                f"Calculated Draw Odds: {calculated_draw_odds:.2f}\n"
-                                f"Bookmaker Home Odds: {bookmaker_odds_home:.2f}\n"
-                                f"Calculated Home Odds: {calculated_home_odds:.2f}\n"
-                                f"Bookmaker Away Odds: {bookmaker_odds_away:.2f}\n"
-                                f"Calculated Away Odds: {calculated_away_odds:.2f}")
+        edge_draw = (1 / bookmaker_odds_draw) - draw_probability
+        edge_home = (1 / bookmaker_odds_home) - home_win_probability
+        edge_away = (1 / bookmaker_odds_away) - away_win_probability
+
+        # Determine the biggest edge where bookmaker odds are lower than calculated
+        edges = {"home": edge_home, "away": edge_away, "draw": edge_draw}
+        biggest_edge = max(edges, key=lambda k: edges[k] if edges[k] > 0 else float('-inf'))
+
+        # Print statements for debugging in the brief required format
+        print(f"Bookmaker Home: {bookmaker_odds_home}, Calculated: {calculated_home_odds}, Edge: {edge_home}")
+        print(f"Bookmaker Away: {bookmaker_odds_away}, Calculated: {calculated_away_odds}, Edge: {edge_away}")
+        print(f"Bookmaker Draw: {bookmaker_odds_draw}, Calculated: {calculated_draw_odds}, Edge: {edge_draw}")
+        print(f"Biggest Edge: {biggest_edge} with Edge: {edges[biggest_edge]}")
+
+        result_label["text"] = (f"Bookmaker Home: {bookmaker_odds_home:.2f}, Calculated: {calculated_home_odds:.2f}, Edge: {edge_home:.4f}\n"
+                                f"Bookmaker Away: {bookmaker_odds_away:.2f}, Calculated: {calculated_away_odds:.2f}, Edge: {edge_away:.4f}\n"
+                                f"Bookmaker Draw: {bookmaker_odds_draw:.2f}, Calculated: {calculated_draw_odds:.2f}, Edge: {edge_draw:.4f}\n"
+                                f"Biggest Edge: {biggest_edge} with Edge: {edges[biggest_edge]:.4f}")
     except ValueError:
         result_label["text"] = "Please enter valid numerical values."
 
