@@ -21,7 +21,6 @@ def calculate_probabilities():
         bookmaker_odds_under_2_5 = float(entries["entry_bookmaker_odds_under_2_5"].get())
         bookmaker_odds_home = float(entries["entry_bookmaker_odds_home"].get())
         bookmaker_odds_away = float(entries["entry_bookmaker_odds_away"].get())
-        account_balance = float(entries["entry_account_balance"].get())
 
         adjusted_home_goals = avg_goals_home_scored * (1 - 0.05 * injuries_home) + form_home * 0.1 - position_home * 0.05
         adjusted_away_goals = avg_goals_away_scored * (1 - 0.05 * injuries_away) + form_away * 0.1 - position_away * 0.05
@@ -30,42 +29,19 @@ def calculate_probabilities():
         away_goals_probs = [poisson_probability(adjusted_away_goals, i) for i in range(5)]
 
         draw_probability = sum([home_goals_probs[i] * away_goals_probs[i] for i in range(5)])
-        draw_probability += (home_goals_probs[0] * away_goals_probs[0]) * 0.10
-        draw_probability += (home_goals_probs[1] * away_goals_probs[1]) * 0.07
-        draw_probability += (home_goals_probs[2] * away_goals_probs[2]) * 0.03
+        home_win_probability = sum([sum(home_goals_probs[i] * away_goals_probs[j] for j in range(i)) for i in range(5)])
+        away_win_probability = sum([sum(home_goals_probs[j] * away_goals_probs[i] for j in range(i)) for i in range(5)])
 
-        if abs(position_home - position_away) <= 2:
-            draw_probability *= 1.10
-        if abs(position_home - position_away) >= 5:
-            draw_probability *= 1.05
-
-        implied_probability_under_2_5 = 1 / bookmaker_odds_under_2_5
-        adjustment_factor = min(1.3, max(0.7, 1 + (implied_probability_under_2_5 - 0.5)))
-        adjusted_draw_probability = draw_probability * adjustment_factor
-        implied_probability_home = 1 / bookmaker_odds_home
-        implied_probability_away = 1 / bookmaker_odds_away
-        combined_probability = implied_probability_home + implied_probability_away + (1 / bookmaker_odds_draw)
-        adjusted_draw_probability /= combined_probability
-
-        if bookmaker_odds_home < 1.6 or bookmaker_odds_away < 1.6:
-            adjusted_draw_probability *= 1.15
-
-        calculated_draw_odds = 1 / adjusted_draw_probability
-
-        if calculated_draw_odds > bookmaker_odds_draw:
-            edge = (1 / bookmaker_odds_draw) - adjusted_draw_probability
-            edge_magnitude = edge
-            kelly_fraction = 0.5 * (edge_magnitude / 2)
-            recommended_stake = kelly_fraction * account_balance
-        else:
-            edge = 0
-            recommended_stake = 0
+        calculated_draw_odds = 1 / draw_probability
+        calculated_home_odds = 1 / home_win_probability
+        calculated_away_odds = 1 / away_win_probability
 
         result_label["text"] = (f"Bookmaker Draw Odds: {bookmaker_odds_draw:.2f}\n"
-                                f"Calculated Draw Odds (Adjusted): {calculated_draw_odds:.2f}\n"
-                                f"Adjustment Factor (Under 2.5 Goals): {adjustment_factor:.4f}\n"
-                                f"Edge: {edge:.4f}\n"
-                                f"Recommended Stake: £{recommended_stake:.2f}")
+                                f"Calculated Draw Odds: {calculated_draw_odds:.2f}\n"
+                                f"Bookmaker Home Odds: {bookmaker_odds_home:.2f}\n"
+                                f"Calculated Home Odds: {calculated_home_odds:.2f}\n"
+                                f"Bookmaker Away Odds: {bookmaker_odds_away:.2f}\n"
+                                f"Calculated Away Odds: {calculated_away_odds:.2f}")
     except ValueError:
         result_label["text"] = "Please enter valid numerical values."
 
@@ -75,7 +51,7 @@ def reset_fields():
     result_label["text"] = ""
 
 root = tk.Tk()
-root.title("Football Draw Prediction")
+root.title("Football Betting Value Analysis")
 
 fields = [
     ("Home Team Average Goals Scored", "entry_home_scored"),
@@ -92,7 +68,6 @@ fields = [
     ("Bookmaker Odds for Under 2.5 Goals", "entry_bookmaker_odds_under_2_5"),
     ("Bookmaker Odds for Home Win", "entry_bookmaker_odds_home"),
     ("Bookmaker Odds for Away Win", "entry_bookmaker_odds_away"),
-    ("Account Balance", "entry_account_balance"),
 ]
 
 entries = {}
@@ -106,7 +81,7 @@ for i, (label_text, var_name) in enumerate(fields):
 button_frame = tk.Frame(root)
 button_frame.grid(row=len(fields), column=0, columnspan=2, pady=10)
 
-calculate_button = ttk.Button(button_frame, text="Calculate Draw Probability", command=calculate_probabilities)
+calculate_button = ttk.Button(button_frame, text="Calculate Betting Value", command=calculate_probabilities)
 calculate_button.grid(row=0, column=0, padx=5)
 
 reset_button = ttk.Button(button_frame, text="Reset", command=reset_fields)
