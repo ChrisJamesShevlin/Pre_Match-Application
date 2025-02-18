@@ -25,35 +25,55 @@ def calculate_probabilities():
         adjusted_home_goals = avg_goals_home_scored * (1 - 0.05 * injuries_home) + form_home * 0.1 - position_home * 0.05
         adjusted_away_goals = avg_goals_away_scored * (1 - 0.05 * injuries_away) + form_away * 0.1 - position_away * 0.05
 
-        home_goals_probs = [poisson_probability(adjusted_home_goals, i) for i in range(5)]
-        away_goals_probs = [poisson_probability(adjusted_away_goals, i) for i in range(5)]
+        goal_range = 10
+        home_goals_probs = [poisson_probability(adjusted_home_goals, i) for i in range(goal_range)]
+        away_goals_probs = [poisson_probability(adjusted_away_goals, i) for i in range(goal_range)]
 
-        draw_probability = sum([home_goals_probs[i] * away_goals_probs[i] for i in range(5)])
-        home_win_probability = sum([sum(home_goals_probs[i] * away_goals_probs[j] for j in range(i)) for i in range(5)])
-        away_win_probability = sum([sum(home_goals_probs[j] * away_goals_probs[i] for j in range(i)) for i in range(5)])
+        draw_probability = sum([home_goals_probs[i] * away_goals_probs[i] for i in range(goal_range)])
+        home_win_probability = sum([sum(home_goals_probs[i] * away_goals_probs[j] for j in range(i)) for i in range(goal_range)])
+        away_win_probability = sum([sum(home_goals_probs[j] * away_goals_probs[i] for j in range(i)) for i in range(goal_range)])
 
-        calculated_draw_odds = 1 / draw_probability
-        calculated_home_odds = 1 / home_win_probability
-        calculated_away_odds = 1 / away_win_probability
+        total_prob = home_win_probability + away_win_probability + draw_probability
+        home_win_probability /= total_prob
+        away_win_probability /= total_prob
+        draw_probability /= total_prob
 
-        edge_draw = (1 / bookmaker_odds_draw) - draw_probability
-        edge_home = (1 / bookmaker_odds_home) - home_win_probability
-        edge_away = (1 / bookmaker_odds_away) - away_win_probability
+        draw_adjustment_factor = 1.10 if bookmaker_odds_draw < 3 else 0.90
+        draw_probability *= draw_adjustment_factor
 
-        # Determine the biggest edge where bookmaker odds are lower than calculated
-        edges = {"home": edge_home, "away": edge_away, "draw": edge_draw}
-        biggest_edge = max(edges, key=lambda k: edges[k] if edges[k] > 0 else float('-inf'))
+        calculated_draw_odds = (1 / draw_probability + bookmaker_odds_draw) / 2
+        calculated_home_odds = (1 / home_win_probability + bookmaker_odds_home) / 2
+        calculated_away_odds = (1 / away_win_probability + bookmaker_odds_away) / 2
 
-        # Print statements for debugging in the brief required format
+        edge_draw = (draw_probability - (1 / bookmaker_odds_draw)) / (1 / bookmaker_odds_draw)
+        edge_home = (home_win_probability - (1 / bookmaker_odds_home)) / (1 / bookmaker_odds_home)
+        edge_away = (away_win_probability - (1 / bookmaker_odds_away)) / (1 / bookmaker_odds_away)
+
+        # Find the biggest positive edge where bookmaker odds < calculated odds (suitable for lay)
+        layable_edges = {
+            "home": edge_home if bookmaker_odds_home < calculated_home_odds else float('-inf'),
+            "away": edge_away if bookmaker_odds_away < calculated_away_odds else float('-inf'),
+            "draw": edge_draw if bookmaker_odds_draw < calculated_draw_odds else float('-inf')
+        }
+
+        biggest_edge_outcome = max(layable_edges, key=lambda k: layable_edges[k])
+        biggest_edge_value = layable_edges[biggest_edge_outcome]
+
+        if biggest_edge_value == float('-inf'):
+            biggest_edge_outcome = "No suitable lay bet"
+            biggest_edge_value = 0
+
+        # Print debugging info
         print(f"Bookmaker Home: {bookmaker_odds_home}, Calculated: {calculated_home_odds}, Edge: {edge_home}")
         print(f"Bookmaker Away: {bookmaker_odds_away}, Calculated: {calculated_away_odds}, Edge: {edge_away}")
         print(f"Bookmaker Draw: {bookmaker_odds_draw}, Calculated: {calculated_draw_odds}, Edge: {edge_draw}")
-        print(f"Biggest Edge: {biggest_edge} with Edge: {edges[biggest_edge]}")
+        print(f"Biggest Edge: {biggest_edge_outcome} with Edge: {biggest_edge_value}")
 
+        # Update UI
         result_label["text"] = (f"Bookmaker Home: {bookmaker_odds_home:.2f}, Calculated: {calculated_home_odds:.2f}, Edge: {edge_home:.4f}\n"
                                 f"Bookmaker Away: {bookmaker_odds_away:.2f}, Calculated: {calculated_away_odds:.2f}, Edge: {edge_away:.4f}\n"
                                 f"Bookmaker Draw: {bookmaker_odds_draw:.2f}, Calculated: {calculated_draw_odds:.2f}, Edge: {edge_draw:.4f}\n"
-                                f"Biggest Edge: {biggest_edge} with Edge: {edges[biggest_edge]:.4f}")
+                                f"Biggest Edge: {biggest_edge_outcome} with Edge: {biggest_edge_value:.4f}")
     except ValueError:
         result_label["text"] = "Please enter valid numerical values."
 
