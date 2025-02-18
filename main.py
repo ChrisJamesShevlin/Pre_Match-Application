@@ -49,19 +49,20 @@ def calculate_probabilities():
         edge_home = (home_win_probability - (1 / bookmaker_odds_home)) / (1 / bookmaker_odds_home)
         edge_away = (away_win_probability - (1 / bookmaker_odds_away)) / (1 / bookmaker_odds_away)
 
-        # Find the biggest positive edge where bookmaker odds < calculated odds (suitable for lay)
+        # Find the most negative edge (strongest lay bet)
         layable_edges = {
-            "home": edge_home if bookmaker_odds_home < calculated_home_odds else float('-inf'),
-            "away": edge_away if bookmaker_odds_away < calculated_away_odds else float('-inf'),
-            "draw": edge_draw if bookmaker_odds_draw < calculated_draw_odds else float('-inf')
+            "home": edge_home if bookmaker_odds_home < calculated_home_odds else float('inf'),
+            "away": edge_away if bookmaker_odds_away < calculated_away_odds else float('inf')
         }
 
-        biggest_edge_outcome = max(layable_edges, key=lambda k: layable_edges[k])
-        biggest_edge_value = layable_edges[biggest_edge_outcome]
+        # Select the most negative edge (strongest lay opportunity)
+        biggest_edge_outcome = min(layable_edges, key=lambda k: layable_edges[k])
 
-        if biggest_edge_value == float('-inf'):
+        if layable_edges[biggest_edge_outcome] == float('inf'):
             biggest_edge_outcome = "No suitable lay bet"
             biggest_edge_value = 0
+        else:
+            biggest_edge_value = layable_edges[biggest_edge_outcome]
 
         # Print debugging info
         print(f"Bookmaker Home: {bookmaker_odds_home}, Calculated: {calculated_home_odds}, Edge: {edge_home}")
