@@ -34,6 +34,9 @@ def calculate_probabilities():
         home_win_probability = sum([sum(home_goals_probs[i] * away_goals_probs[j] for j in range(i)) for i in range(goal_range)])
         away_win_probability = sum([sum(home_goals_probs[j] * away_goals_probs[i] for j in range(i)) for i in range(goal_range)])
 
+        # Adjust draw probability based on under 2.5 goals odds
+        draw_probability *= bookmaker_odds_under_2_5
+
         # Normalize Probabilities
         total_prob = home_win_probability + away_win_probability + draw_probability
         if total_prob > 0:
