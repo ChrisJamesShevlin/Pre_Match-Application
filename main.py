@@ -86,6 +86,11 @@ def calculate_probabilities():
     except ValueError:
         result_label["text"] = "Please enter valid numerical values."
 
+def reset_fields():
+    for entry in entries.values():
+        entry.delete(0, tk.END)
+    result_label["text"] = ""
+
 root = tk.Tk()
 root.title("Football Betting Value Analysis")
 
@@ -127,5 +132,9 @@ result_label.grid(row=len(entries), column=0, columnspan=2, padx=5, pady=5)
 # Create and place the calculate button
 calculate_button = tk.Button(root, text="Calculate Probabilities", command=calculate_probabilities)
 calculate_button.grid(row=len(entries) + 1, column=0, columnspan=2, padx=5, pady=10)
+
+# Create and place the reset button
+reset_button = tk.Button(root, text="Reset All Fields", command=reset_fields)
+reset_button.grid(row=len(entries) + 2, column=0, columnspan=2, padx=5, pady=10)
 
 root.mainloop()
