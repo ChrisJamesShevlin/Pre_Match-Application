@@ -22,7 +22,7 @@ def calculate_probabilities():
         bookmaker_odds_home = float(entries["entry_bookmaker_odds_home"].get())
         bookmaker_odds_away = float(entries["entry_bookmaker_odds_away"].get())
 
-        # ✅ Improved Expected Goals Calculation (Now Includes Goals Conceded)
+        # Expected Goals Calculation
         adjusted_home_goals = ((avg_goals_home_scored + avg_goals_away_conceded) / 2) * (1 - 0.05 * injuries_home) + form_home * 0.1 - position_home * 0.02
         adjusted_away_goals = ((avg_goals_away_scored + avg_goals_home_conceded) / 2) * (1 - 0.05 * injuries_away) + form_away * 0.1 - position_away * 0.02
 
@@ -34,36 +34,36 @@ def calculate_probabilities():
         home_win_probability = sum([sum(home_goals_probs[i] * away_goals_probs[j] for j in range(i)) for i in range(goal_range)])
         away_win_probability = sum([sum(home_goals_probs[j] * away_goals_probs[i] for j in range(i)) for i in range(goal_range)])
 
-        # ✅ Normalize Probabilities (Ensure They Sum to 100%)
+        # Normalize Probabilities
         total_prob = home_win_probability + away_win_probability + draw_probability
         if total_prob > 0:
             home_win_probability /= total_prob
             away_win_probability /= total_prob
             draw_probability /= total_prob
 
-        # ✅ Adjust Draw Probability (Prevent Overinflation)
-        draw_adjustment_factor = 1 - (0.1 * (2.0 - bookmaker_odds_under_2_5)) if bookmaker_odds_under_2_5 < 2.0 else 1
-        draw_adjustment_factor = max(0.85, draw_adjustment_factor)  # Prevent over-adjustment
-        draw_probability *= draw_adjustment_factor
+        # Ensure the draw odds do not fall below 3.15
+        min_draw_odds = 3.15
+        if (1 / draw_probability) < min_draw_odds:
+            draw_probability = 1 / min_draw_odds  # Adjusted draw probability
+            remaining_probability = 1 - draw_probability  # Leftover probability for home/away
+            
+            # Redistribute home and away probabilities proportionally
+            total_home_away_prob = home_win_probability + away_win_probability
+            if total_home_away_prob > 0:
+                home_win_probability = (home_win_probability / total_home_away_prob) * remaining_probability
+                away_win_probability = (away_win_probability / total_home_away_prob) * remaining_probability
 
-        # ✅ Normalize Again After Adjustment
-        total_prob = home_win_probability + away_win_probability + draw_probability
-        if total_prob > 0:
-            home_win_probability /= total_prob
-            away_win_probability /= total_prob
-            draw_probability /= total_prob
-
-        # ✅ Fair Odds Calculation (Based on Adjusted Probabilities)
+        # Fair Odds Calculation (Based on Adjusted Probabilities)
         calculated_draw_odds = 1 / draw_probability
-        calculated_home_odds = 1 / home_win_probability
-        calculated_away_odds = 1 / away_win_probability
+        calculated_home_odds = 1 / home_win_probability if home_win_probability > 0 else float('inf')
+        calculated_away_odds = 1 / away_win_probability if away_win_probability > 0 else float('inf')
 
-        # ✅ Edge Calculation (Difference Between Fair & Bookmaker Odds)
+        # Edge Calculation (Difference Between Fair & Bookmaker Odds)
         edge_draw = (draw_probability - (1 / bookmaker_odds_draw)) / (1 / bookmaker_odds_draw)
         edge_home = (home_win_probability - (1 / bookmaker_odds_home)) / (1 / bookmaker_odds_home)
         edge_away = (away_win_probability - (1 / bookmaker_odds_away)) / (1 / bookmaker_odds_away)
 
-        # ✅ Determine Best Lay Bet (Only If Bookmaker Odds Are Lower Than Fair Odds)
+        # Determine Best Lay Bet (Only If Bookmaker Odds Are Lower Than Fair Odds)
         layable_edges = {
             "home": edge_home if bookmaker_odds_home < calculated_home_odds else float('inf'),
             "away": edge_away if bookmaker_odds_away < calculated_away_odds else float('inf'),
@@ -72,13 +72,7 @@ def calculate_probabilities():
         min_lay_edge_outcome = min(layable_edges, key=lambda k: layable_edges[k])
         biggest_edge_value = layable_edges[min_lay_edge_outcome]
 
-        # ✅ Debugging Output
-        print(f"Bookmaker Home: {bookmaker_odds_home}, Calculated: {calculated_home_odds:.2f}, Edge: {edge_home:.4f}")
-        print(f"Bookmaker Away: {bookmaker_odds_away}, Calculated: {calculated_away_odds:.2f}, Edge: {edge_away:.4f}")
-        print(f"Bookmaker Draw: {bookmaker_odds_draw}, Calculated: {calculated_draw_odds:.2f}, Edge: {edge_draw:.4f}")
-        print(f"Biggest Edge: {min_lay_edge_outcome} with Edge: {biggest_edge_value:.4f}")
-
-        # ✅ UI Update
+        # Update UI Output
         result_label["text"] = (f"Bookmaker Home: {bookmaker_odds_home:.2f}, Calculated: {calculated_home_odds:.2f}, Edge: {edge_home:.4f}\n"
                                 f"Bookmaker Away: {bookmaker_odds_away:.2f}, Calculated: {calculated_away_odds:.2f}, Edge: {edge_away:.4f}\n"
                                 f"Bookmaker Draw: {bookmaker_odds_draw:.2f}, Calculated: {calculated_draw_odds:.2f}, Edge: {edge_draw:.4f}\n"
