@@ -63,6 +63,12 @@ def calculate_probabilities():
             draw_adjustment_factor = 0.75
         draw_probability *= draw_adjustment_factor
 
+        # Normalize the probabilities to ensure they add up to 1
+        total_prob = home_win_probability + away_win_probability + draw_probability
+        home_win_probability /= total_prob
+        away_win_probability /= total_prob
+        draw_probability /= total_prob
+
         calculated_draw_odds = (1 / draw_probability + bookmaker_odds_draw) / 2
         calculated_home_odds = (1 / home_win_probability + bookmaker_odds_home) / 2
         calculated_away_odds = (1 / away_win_probability + bookmaker_odds_away) / 2
