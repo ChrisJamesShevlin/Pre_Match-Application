@@ -72,6 +72,12 @@ def calculate_probabilities():
         min_lay_edge_outcome = min(layable_edges, key=lambda k: layable_edges[k])
         biggest_edge_value = layable_edges[min_lay_edge_outcome]
 
+        # Debugging statements
+        print(f"Home Odds: Bookmaker: {bookmaker_odds_home}, Calculated: {calculated_home_odds:.2f}, Edge: {edge_home:.4f}")
+        print(f"Draw Odds: Bookmaker: {bookmaker_odds_draw}, Calculated: {calculated_draw_odds:.2f}, Edge: {edge_draw:.4f}")
+        print(f"Away Odds: Bookmaker: {bookmaker_odds_away}, Calculated: {calculated_away_odds:.2f}, Edge: {edge_away:.4f}")
+        print(f"Biggest Edge: {min_lay_edge_outcome} with Edge: {biggest_edge_value:.4f}")
+
         # Update UI Output
         result_label["text"] = (f"Bookmaker Home: {bookmaker_odds_home:.2f}, Calculated: {calculated_home_odds:.2f}, Edge: {edge_home:.4f}\n"
                                 f"Bookmaker Away: {bookmaker_odds_away:.2f}, Calculated: {calculated_away_odds:.2f}, Edge: {edge_away:.4f}\n"
