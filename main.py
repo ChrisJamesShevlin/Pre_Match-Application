@@ -49,41 +49,26 @@ def calculate_probabilities():
         edge_home = (home_win_probability - (1 / bookmaker_odds_home)) / (1 / bookmaker_odds_home)
         edge_away = (away_win_probability - (1 / bookmaker_odds_away)) / (1 / bookmaker_odds_away)
 
-        backable_edges = {
-            "home": edge_home if bookmaker_odds_home > calculated_home_odds else float('-inf'),
-            "away": edge_away if bookmaker_odds_away > calculated_away_odds else float('-inf'),
-            "draw": edge_draw if bookmaker_odds_draw > calculated_draw_odds else float('-inf')
-        }
-
         layable_edges = {
             "home": edge_home if bookmaker_odds_home < calculated_home_odds else float('inf'),
             "away": edge_away if bookmaker_odds_away < calculated_away_odds else float('inf'),
             "draw": edge_draw if bookmaker_odds_draw < calculated_draw_odds else float('inf')
         }
 
-        max_back_edge_outcome = max(backable_edges, key=lambda k: backable_edges[k])
         min_lay_edge_outcome = min(layable_edges, key=lambda k: layable_edges[k])
-
-        if abs(backable_edges[max_back_edge_outcome]) > abs(layable_edges[min_lay_edge_outcome]):
-            biggest_edge_outcome = max_back_edge_outcome
-            biggest_edge_value = backable_edges[max_back_edge_outcome]
-            bet_type = "back"
-        else:
-            biggest_edge_outcome = min_lay_edge_outcome
-            biggest_edge_value = layable_edges[min_lay_edge_outcome]
-            bet_type = "lay"
+        biggest_edge_value = layable_edges[min_lay_edge_outcome]
 
         # Print debugging info
         print(f"Bookmaker Home: {bookmaker_odds_home}, Calculated: {calculated_home_odds}, Edge: {edge_home}")
         print(f"Bookmaker Away: {bookmaker_odds_away}, Calculated: {calculated_away_odds}, Edge: {edge_away}")
         print(f"Bookmaker Draw: {bookmaker_odds_draw}, Calculated: {calculated_draw_odds}, Edge: {edge_draw}")
-        print(f"Biggest Edge: {biggest_edge_outcome} with Edge: {biggest_edge_value}, Bet Type: {bet_type}")
+        print(f"Biggest Edge: {min_lay_edge_outcome} with Edge: {biggest_edge_value}")
 
         # Update UI
         result_label["text"] = (f"Bookmaker Home: {bookmaker_odds_home:.2f}, Calculated: {calculated_home_odds:.2f}, Edge: {edge_home:.4f}\n"
                                 f"Bookmaker Away: {bookmaker_odds_away:.2f}, Calculated: {calculated_away_odds:.2f}, Edge: {edge_away:.4f}\n"
                                 f"Bookmaker Draw: {bookmaker_odds_draw:.2f}, Calculated: {calculated_draw_odds:.2f}, Edge: {edge_draw:.4f}\n"
-                                f"Biggest Edge: {biggest_edge_outcome} with Edge: {biggest_edge_value:.4f}, Bet Type: {bet_type}")
+                                f"Biggest Edge: {min_lay_edge_outcome} with Edge: {biggest_edge_value:.4f}")
     except ValueError:
         result_label["text"] = "Please enter valid numerical values."
 
