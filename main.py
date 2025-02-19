@@ -38,11 +38,29 @@ def calculate_probabilities():
         away_win_probability /= total_prob
         draw_probability /= total_prob
 
-        # Adjust draw probability based on bookmaker odds for under 2.5 goals
-        if bookmaker_odds_under_2_5 < 2.5:
+        # Adjust draw probability based on bookmaker odds for under 2.5 goals with higher sensitivity
+        if bookmaker_odds_under_2_5 < 1.6:
+            draw_adjustment_factor = 1.25
+        elif bookmaker_odds_under_2_5 < 1.7:
+            draw_adjustment_factor = 1.20
+        elif bookmaker_odds_under_2_5 < 1.8:
+            draw_adjustment_factor = 1.15
+        elif bookmaker_odds_under_2_5 < 1.9:
             draw_adjustment_factor = 1.10
-        else:
+        elif bookmaker_odds_under_2_5 < 2.0:
+            draw_adjustment_factor = 1.05
+        elif bookmaker_odds_under_2_5 < 2.1:
+            draw_adjustment_factor = 1.00
+        elif bookmaker_odds_under_2_5 < 2.2:
+            draw_adjustment_factor = 0.95
+        elif bookmaker_odds_under_2_5 < 2.3:
             draw_adjustment_factor = 0.90
+        elif bookmaker_odds_under_2_5 < 2.4:
+            draw_adjustment_factor = 0.85
+        elif bookmaker_odds_under_2_5 < 2.5:
+            draw_adjustment_factor = 0.80
+        else:
+            draw_adjustment_factor = 0.75
         draw_probability *= draw_adjustment_factor
 
         calculated_draw_odds = (1 / draw_probability + bookmaker_odds_draw) / 2
